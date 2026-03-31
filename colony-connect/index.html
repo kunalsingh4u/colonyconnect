@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="description" content="ColonyConnect — AI-powered smart complaint management system for residential colonies and societies." />
+  <meta name="theme-color" content="#0f0c29" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>ColonyConnect — Smart Society Management</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Firebase Compat Line -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================ -->
+  <!-- TOAST NOTIFICATION -->
+  <!-- ============================================================ -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <!-- ============================================================ -->
+  <!-- LOADING OVERLAY -->
+  <!-- ============================================================ -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loader-ring"></div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- APP WRAPPER -->
+  <!-- ============================================================ -->
+  <div id="app">
+
+    <!-- ========================================================== -->
+    <!-- SCREEN 1: LANDING -->
+    <!-- ========================================================== -->
+    <section id="screen-landing" class="screen active">
+      <div class="landing-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+      </div>
+      <div class="landing-content">
+        <div class="app-logo">
+          <div class="logo-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+          </div>
+          <div>
+            <h1 class="app-name">ColonyConnect</h1>
+            <p class="app-tagline">Speak up. We listen. Problems solved.</p>
+          </div>
+        </div>
+        <p class="landing-desc">AI-powered complaint management for your residential society. File issues with your voice, track resolutions in real-time.</p>
+
+        <div class="role-cards">
+          <button id="btn-new-colony" class="role-card" onclick="showScreen('screen-colony-register')">
+            <div class="role-icon colony">🏗️</div>
+            <div class="role-text">
+              <strong>Register Colony</strong>
+              <span>Set up your society on ColonyConnect</span>
+            </div>
+            <svg class="role-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+
+          <button id="btn-resident-login" class="role-card" onclick="showScreen('screen-resident-login')">
+            <div class="role-icon resident">👤</div>
+            <div class="role-text">
+              <strong>I'm a Resident</strong>
+              <span>File complaints & track status</span>
+            </div>
+            <svg class="role-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+
+          <button id="btn-manager-login" class="role-card" onclick="showScreen('screen-manager-login')">
+            <div class="role-icon manager">🛡️</div>
+            <div class="role-text">
+              <strong>I'm a Manager</strong>
+              <span>View & resolve society complaints</span>
+            </div>
+            <svg class="role-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <div class="landing-footer">
+          <span class="badge-demo" onclick="loadDemoAndEnter()">🎭 Try Demo Mode</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- SCREEN 2: COLONY REGISTRATION -->
+    <!-- ========================================================== -->
+    <section id="screen-colony-register" class="screen">
+      <div class="screen-header">
+        <button id="back-from-register" class="btn-back" onclick="showScreen('screen-landing')" aria-label="Go back">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <h2>Register Colony</h2>
+        <div></div>
+      </div>
+      <div class="form-container">
+        <div class="form-hero">
+          <div class="form-emoji">🏘️</div>
+          <p>Set up your society once. Share the Colony Code with all residents.</p>
+        </div>
+        <form id="colony-register-form" onsubmit="registerColony(event)">
+          <div class="form-group">
+            <label for="colony-name">Colony / Society Name</label>
+            <input type="text" id="colony-name" placeholder="e.g. Green Valley Apartments" required />
+          </div>
+          <div class="form-group">
+            <label for="colony-area">Area / Sector</label>
+            <input type="text" id="colony-area" placeholder="e.g. Sector 12, Noida" required />
+          </div>
+          <div class="form-group">
+            <label for="colony-pin">PIN Code</label>
+            <input type="text" id="colony-pin" placeholder="e.g. 201301" maxlength="6" pattern="[0-9]{6}" required />
+          </div>
+          <div class="form-group">
+            <label for="colony-admin-name">Admin Name</label>
+            <input type="text" id="colony-admin-name" placeholder="Your full name" required />
+          </div>
+          <div class="form-group">
+            <label for="colony-admin-password">Admin Password</label>
+            <input type="password" id="colony-admin-password" placeholder="Create a secure password" required minlength="4" />
+          </div>
+          <button type="submit" class="btn-primary" id="register-colony-btn">
+            <span>🚀 Register Colony</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- SCREEN 3: COLONY CODE SUCCESS -->
+    <!-- ========================================================== -->
+    <section id="screen-colony-success" class="screen">
+      <div class="screen-header">
+        <div></div>
+        <h2>Colony Registered!</h2>
+        <div></div>
+      </div>
+      <div class="success-container">
+        <div class="success-animation">✅</div>
+        <h3 id="success-colony-name">Green Valley Apartments</h3>
+        <p>Your colony is live! Share this Colony Code with all residents:</p>
+        <div class="colony-code-card">
+          <span class="colony-code-label">Colony Code</span>
+          <span id="success-colony-code" class="colony-code-value">COL-0000</span>
+          <button id="copy-code-btn" class="btn-copy" onclick="copyColonyCode()" aria-label="Copy colony code">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <div class="success-info-grid">
+          <div class="info-card">
+            <span>📍</span>
+            <span id="success-colony-area">Area</span>
+          </div>
+          <div class="info-card">
+            <span>🔑</span>
+            <span>Admin Password Set</span>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="showScreen('screen-manager-login')" id="go-to-manager-btn">
+          Go to Manager Dashboard →
+        </button>
+        <button class="btn-secondary" onclick="showScreen('screen-landing')" id="go-to-landing-btn" style="margin-top:0.75rem">Back to Home</button>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- SCREEN 4: RESIDENT LOGIN -->
+    <!-- ========================================================== -->
+    <section id="screen-resident-login" class="screen">
+      <div class="screen-header">
+        <button id="back-from-resident-login" class="btn-back" onclick="showScreen('screen-landing')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <h2>Resident Login</h2>
+        <div></div>
+      </div>
+      <div class="form-container">
+        <div class="form-hero">
+          <div class="form-emoji">👤</div>
+          <p>Enter your Colony Code and House Number to access your portal.</p>
+        </div>
+        <form id="resident-login-form" onsubmit="residentLogin(event)">
+          <div class="form-group">
+            <label for="resident-colony-code">Colony Code</label>
+            <input type="text" id="resident-colony-code" placeholder="e.g. COL-8823" required style="text-transform:uppercase" />
+          </div>
+          <div class="form-group">
+            <label for="resident-house">House Number</label>
+            <input type="text" id="resident-house" placeholder="e.g. A-101" required />
+          </div>
+          <div class="form-group">
+            <label for="resident-name">Your Name</label>
+            <input type="text" id="resident-name" placeholder="Your full name" required />
+          </div>
+          <button type="submit" id="resident-login-btn" class="btn-primary">
+            <span>Enter Portal →</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- SCREEN 5: MANAGER LOGIN -->
+    <!-- ========================================================== -->
+    <section id="screen-manager-login" class="screen">
+      <div class="screen-header">
+        <button id="back-from-manager-login" class="btn-back" onclick="showScreen('screen-landing')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <h2>Manager Login</h2>
+        <div></div>
+      </div>
+      <div class="form-container">
+        <div class="form-hero">
+          <div class="form-emoji">🛡️</div>
+          <p>Access the colony dashboard to view and resolve complaints.</p>
+        </div>
+        <form id="manager-login-form" onsubmit="managerLogin(event)">
+          <div class="form-group">
+            <label for="manager-colony-code">Colony Code</label>
+            <input type="text" id="manager-colony-code" placeholder="e.g. COL-8823" required style="text-transform:uppercase" />
+          </div>
+          <div class="form-group">
+            <label for="manager-password">Admin Password</label>
+            <input type="password" id="manager-password" placeholder="Enter admin password" required />
+          </div>
+          <button type="submit" id="manager-login-btn" class="btn-primary">
+            <span>Access Dashboard →</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- SCREEN 6: RESIDENT PORTAL -->
+    <!-- ========================================================== -->
+    <section id="screen-resident-portal" class="screen">
+      <div class="portal-header">
+        <div class="portal-header-left">
+          <div class="user-avatar" id="resident-avatar">R</div>
+          <div>
+            <p class="portal-greeting">Good day,</p>
+            <p class="portal-username" id="portal-resident-name">Resident</p>
+          </div>
+        </div>
+        <div class="portal-header-right">
+          <button id="notif-btn" class="notif-btn" onclick="toggleNotifications()" aria-label="Notifications">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span id="notif-badge" class="notif-badge hidden">0</span>
+          </button>
+          <button id="logout-resident-btn" class="btn-icon-sm" onclick="logout()" aria-label="Logout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Notification Panel -->
+      <div id="notif-panel" class="notif-panel hidden">
+        <div class="notif-panel-header">
+          <span>Notifications</span>
+          <button id="mark-all-read-btn" onclick="markAllRead()">Mark all read</button>
+        </div>
+        <div id="notif-list" class="notif-list"></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="portal-tabs">
+        <button id="tab-report" class="portal-tab active" onclick="switchPortalTab('report')" aria-selected="true">🎙️ Report</button>
+        <button id="tab-history" class="portal-tab" onclick="switchPortalTab('history')" aria-selected="false">📋 My Complaints</button>
+      </div>
+
+      <!-- Tab: Report -->
+      <div id="tab-content-report" class="tab-content active">
+        <div class="colony-info-pill" id="resident-colony-info">
+          <span>🏘️</span>
+          <span id="resident-colony-display">Colony Name</span>
+          <span class="separator">·</span>
+          <span id="resident-house-display">House No.</span>
+        </div>
+
+        <!-- Language Toggle -->
+        <div class="lang-toggle-row">
+          <span>Voice Language:</span>
+          <div class="lang-toggle" id="lang-toggle">
+            <button id="lang-en" class="lang-btn active" onclick="setLang('en-IN')">English</button>
+            <button id="lang-hi" class="lang-btn" onclick="setLang('hi-IN')">हिंदी</button>
+          </div>
+        </div>
+
+        <!-- Mic Button -->
+        <div class="mic-area">
+          <button id="mic-btn" class="mic-btn" onclick="toggleRecording()" aria-label="Start recording">
+            <div class="mic-ring mic-ring-1"></div>
+            <div class="mic-ring mic-ring-2"></div>
+            <div class="mic-ring mic-ring-3"></div>
+            <div class="mic-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </div>
+          </button>
+          <p id="mic-label" class="mic-label">Tap to speak your complaint</p>
+          <p id="mic-sublabel" class="mic-sublabel">या हिंदी में बोलें</p>
+        </div>
+
+        <!-- Transcript -->
+        <div id="transcript-box" class="transcript-box hidden">
+          <div class="transcript-header">
+            <span>📝 Transcript</span>
+            <button id="clear-transcript-btn" onclick="clearTranscript()" class="btn-text-sm">Clear</button>
+          </div>
+          <p id="transcript-text" class="transcript-text"></p>
+        </div>
+
+        <!-- AI Result -->
+        <div id="ai-result" class="ai-result hidden">
+          <div class="ai-result-header">
+            <span>🤖 AI Analysis</span>
+            <span id="ai-confidence" class="ai-confidence-badge">High Confidence</span>
+          </div>
+          <div class="ai-result-grid">
+            <div class="ai-field">
+              <label>Category</label>
+              <div class="category-selector" id="category-selector">
+                <select id="category-select" class="category-select" onchange="onCategoryChange()">
+                  <option value="Plumbing">🔧 Plumbing</option>
+                  <option value="Electrical">⚡ Electrical</option>
+                  <option value="Cleaning">🗑️ Cleaning</option>
+                  <option value="Security">🔐 Security</option>
+                  <option value="Gardening">🌿 Gardening</option>
+                  <option value="Road">🛣️ Road</option>
+                  <option value="Street Light">💡 Street Light</option>
+                  <option value="Others">📦 Others</option>
+                </select>
+              </div>
+            </div>
+            <div class="ai-field">
+              <label>Urgency</label>
+              <div id="urgency-badge" class="urgency-badge urgency-medium">Medium</div>
+            </div>
+          </div>
+          <div class="ai-field" style="margin-top:1rem">
+            <label>Tags</label>
+            <div id="ai-tags" class="tags-row"></div>
+          </div>
+          <div class="ai-field" style="margin-top:1rem">
+            <label>Edit Description (optional)</label>
+            <textarea id="complaint-description" class="complaint-textarea" rows="3" placeholder="Describe the issue..."></textarea>
+          </div>
+          <button id="submit-complaint-btn" class="btn-primary btn-submit" onclick="submitComplaint()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+            Submit Complaint
+          </button>
+        </div>
+
+        <!-- Or type manually -->
+        <div class="manual-report">
+          <div class="divider-text"><span>or type manually</span></div>
+          <button id="btn-manual-type" class="btn-secondary" onclick="openManualEntry()">✍️ Type a Complaint</button>
+        </div>
+      </div>
+
+      <!-- Tab: History -->
+      <div id="tab-content-history" class="tab-content">
+        <div id="my-complaints-list" class="complaints-list">
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>No complaints yet.</p>
+            <p>Tap the Report tab to file one!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- SCREEN 7: MANAGER DASHBOARD -->
+    <!-- ========================================================== -->
+    <section id="screen-manager-dashboard" class="screen">
+      <div class="dashboard-header">
+        <div class="dashboard-title">
+          <h2 id="dashboard-colony-name">Colony Dashboard</h2>
+          <p id="dashboard-colony-code" class="dashboard-subtitle">COL-0000</p>
+        </div>
+        <div class="dashboard-actions">
+          <button id="export-btn" class="btn-icon" onclick="exportData()" title="Export Data" aria-label="Export complaints data">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+          <button id="logout-manager-btn" class="btn-icon" onclick="logout()" title="Logout" aria-label="Logout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card stat-total">
+          <span class="stat-icon">📋</span>
+          <span id="stat-total" class="stat-number">0</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-card stat-pending">
+          <span class="stat-icon">⏳</span>
+          <span id="stat-pending" class="stat-number">0</span>
+          <span class="stat-label">Pending</span>
+        </div>
+        <div class="stat-card stat-progress">
+          <span class="stat-icon">🔄</span>
+          <span id="stat-progress" class="stat-number">0</span>
+          <span class="stat-label">In Progress</span>
+        </div>
+        <div class="stat-card stat-resolved">
+          <span class="stat-icon">✅</span>
+          <span id="stat-resolved" class="stat-number">0</span>
+          <span class="stat-label">Resolved</span>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-card">
+        <div class="chart-title">Complaints by Category</div>
+        <div class="chart-wrapper">
+          <canvas id="category-chart" aria-label="Category distribution chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label for="filter-status">Status</label>
+          <select id="filter-status" onchange="applyFilters()">
+            <option value="">All</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-category">Category</label>
+          <select id="filter-category" onchange="applyFilters()">
+            <option value="">All</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Cleaning">Cleaning</option>
+            <option value="Security">Security</option>
+            <option value="Gardening">Gardening</option>
+            <option value="Road">Road</option>
+            <option value="Street Light">Street Light</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-urgency">Urgency</label>
+          <select id="filter-urgency" onchange="applyFilters()">
+            <option value="">All</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="filter-group search-group">
+          <label for="filter-search">Search</label>
+          <input id="filter-search" type="search" placeholder="House no. or keyword..." oninput="applyFilters()" />
+        </div>
+      </div>
+
+      <!-- Problem Inbox -->
+      <div class="inbox-header">
+        <span id="inbox-count" class="inbox-count">0 complaints</span>
+        <button id="clear-filters-btn" class="btn-text-sm" onclick="clearFilters()">Clear filters</button>
+      </div>
+      <div id="manager-complaints-list" class="complaints-list manager-list">
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p>No complaints yet.</p>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /#app -->
+
+  <!-- ========================================================== -->
+  <!-- MANUAL ENTRY MODAL -->
+  <!-- ========================================================== -->
+  <div id="manual-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title">Type a Complaint</h3>
+        <button id="close-modal-btn" class="btn-close" onclick="closeManualEntry()" aria-label="Close modal">✕</button>
+      </div>
+      <div class="form-group">
+        <label for="manual-category">Category</label>
+        <select id="manual-category" class="category-select">
+          <option value="Plumbing">🔧 Plumbing</option>
+          <option value="Electrical">⚡ Electrical</option>
+          <option value="Cleaning">🗑️ Cleaning</option>
+          <option value="Security">🔐 Security</option>
+          <option value="Gardening">🌿 Gardening</option>
+          <option value="Road">🛣️ Road</option>
+          <option value="Street Light">💡 Street Light</option>
+          <option value="Others">📦 Others</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="manual-urgency">Urgency</label>
+        <select id="manual-urgency" class="category-select">
+          <option value="High">🔴 High</option>
+          <option value="Medium" selected>🟡 Medium</option>
+          <option value="Low">🟢 Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="manual-description">Description</label>
+        <textarea id="manual-description" class="complaint-textarea" rows="4" placeholder="Describe the issue in detail..." required></textarea>
+      </div>
+      <button id="submit-manual-btn" class="btn-primary" onclick="submitManualComplaint()">Submit Complaint</button>
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- PROBLEM DETAIL MODAL -->
+  <!-- ========================================================== -->
+  <div id="detail-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+    <div class="modal-card modal-card-wide">
+      <div class="modal-header">
+        <h3 id="detail-title">Complaint Details</h3>
+        <button id="close-detail-btn" class="btn-close" onclick="closeDetailModal()" aria-label="Close detail">✕</button>
+      </div>
+      <div id="detail-content"></div>
+      <div id="detail-actions" class="detail-actions"></div>
+    </div>
+  </div>
+
+  <script src="backend.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
